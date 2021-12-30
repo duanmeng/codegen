@@ -40,12 +40,37 @@ else()
   list(APPEND CODEGEN_CXX_FLAGS ${CODEGEN_CXX_RELEASE_FLAGS})
 endif()
 
-set(CODEGEN_CXX_FILESYSTEM stdc++fs)
-if(APPLE)
-  set(CODEGEN_CXX_FILESYSTEM c++fs)
-endif()
+MESSAGE(STATUS "SystemRoot ${CMAKE_OSX_SYSROOT}")
+MESSAGE(STATUS "SystemRoot ${CMAKE_TOOLCHAIN_FILE}")
 
+if (APPLE)
+  MESSAGE(STATUS "IS OS X")
+  MESSAGE(STATUS "host system is ${CMAKE_HOST_SYSTEM_NAME}")
+  MESSAGE(STATUS "host system is ${OS_DARWIN}")
+  MESSAGE(STATUS "host system is ${OS_LINUX}")
+  set(CMAKE_C_COMPILER /usr/local/opt/llvm/bin/clang)
+  set(CMAKE_CXX_COMPILER /usr/local/opt/llvm/bin/clang++)
+  #set(CMAKE_C_COMPILER /usr/local/Cellar/llvm@8/8.0.1_4/bin/clang)
+  #set(CMAKE_CXX_COMPILER /usr/local/Cellar/llvm@8/8.0.1_4/bin/clang++)
+  set(CMAKE_CXX_STANDARD 17)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+else ()
+  MESSAGE(STATUS "IS Not OS X")
+  set(CMAKE_C_COMPILER gcc)
+  set(CMAKE_CXX_COMPILER g++)
+endif ()
+
+# we do not need filesystem anly since the filesystem in part of standards in new version sdk
+#set(CODEGEN_CXX_FILESYSTEM stdc++fs)
+#if(APPLE) or use OS_DARWIN
+#set(CODEGEN_CXX_FILESYSTEM c++fs)
+#endif()
+
+# llvm@8 is not int the default llvm cmkae Find Modules (FindLLVM@8.cmake) add LLVM_DIR
+set(LLVM_DIR /usr/local/opt/llvm@8/lib/cmake/llvm/)
 find_package(LLVM 8 REQUIRED)
+#set(LLVM_DIR /usr/local/opt/llvm/lib/cmake/llvm/)
+#find_package(LLVM 12 REQUIRED)
 find_package(fmt REQUIRED)
 
 add_library(codegen
@@ -60,7 +85,9 @@ target_include_directories(codegen PUBLIC
 target_compile_features(codegen PUBLIC cxx_std_17)
 target_link_libraries(codegen PRIVATE ${CODEGEN_CXX_FLAGS})
 target_compile_options(codegen PRIVATE ${CODEGEN_CXX_FLAGS})
-target_link_libraries(codegen PUBLIC LLVM fmt::fmt ${CODEGEN_CXX_FILESYSTEM})
+# no need to link filesystem anly more
+# target_link_libraries(codegen PUBLIC LLVM fmt::fmt ${CODEGEN_CXX_FILESYSTEM})
+target_link_libraries(codegen PUBLIC LLVM fmt::fmt)
 
 if(BUILD_TESTING)
   add_subdirectory(tests)
